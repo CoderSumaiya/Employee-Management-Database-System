@@ -148,42 +148,98 @@ BEGIN
 END
 GO
 
--- 17. Create a Table-valued Function
+
+-- 17. Create a Table-Valued Function
+-- to get Department wise detail information
+
 IF OBJECT_ID('fn_GetDepartmentDetails') IS NOT NULL
-DROP FUNCTION fn_GetDepartmentDetails
+    DROP FUNCTION fn_GetDepartmentDetails;
 GO
-CREATE FUNCTION fn_GetDepartmentDetails (@DepartmentNo INT)
+
+CREATE FUNCTION fn_GetDepartmentDetails
+(
+    @DepartmentNo INT
+)
 RETURNS TABLE
 AS
 RETURN
-(  
-    SELECT EmployeeID, EmployeeName, DepartmentNo  
+(
+    SELECT
+        EmployeeID,
+        EmployeeName,
+        Salary,
+        DesignationID,
+        DepartmentNo
     FROM Employee
     WHERE DepartmentNo = @DepartmentNo
 );
 GO
+
+-- Justify
+SELECT *
+FROM fn_GetDepartmentDetails(1);
 
 -- 30. Example of ALTER, CREATE, DROP table
 CREATE TABLE TestEmployee (TestID INT PRIMARY KEY, TestName VARCHAR(30))
 ALTER TABLE TestEmployee ADD Salary DECIMAL(10,2)
 DROP TABLE TestEmployee
 GO
-
--- 35 & 36. Create View for all employee, department, and project details
-IF OBJECT_ID('vu_EmpDepDesProject') IS NOT NULL
-DROP VIEW vu_EmpDepDesProject
+-- 35 Create a View to show all employee, department, project, and designation details
+IF OBJECT_ID('dbo.vw_EmployeeCompleteDetails', 'V') IS NOT NULL
+    DROP VIEW dbo.vw_EmployeeCompleteDetails;
 GO
 
-CREATE VIEW vu_EmpDepDesProject AS
-SELECT e.EmployeeID, e.EmployeeName, e.Salary, d.DepartmentNo, d.DepartmentName,
-       de.DesignationID, de.DesignationTitle, pa.WorkHour, p.ProjectName, p.Budget
+CREATE VIEW dbo.vw_EmployeeCompleteDetails
+AS
+SELECT
+    e.EmployeeID,
+    e.EmployeeName,
+    e.Salary,
+    d.DepartmentNo,
+    d.DepartmentName,
+    des.DesignationID,
+    des.DesignationTitle,
+    p.ProjectID,
+    p.ProjectName,
+    p.Budget
 FROM Employee AS e
-JOIN ProjectAssigment AS pa ON pa.EmployeeID = e.EmployeeID 
-JOIN Departments AS d ON e.DepartmentNo = d.DepartmentNo
-JOIN Designation AS de ON e.DesignationID = de.DesignationID
-JOIN Projects AS p ON pa.ProjectID = p.ProjectID
+LEFT JOIN Departments AS d
+    ON e.DepartmentNo = d.DepartmentNo
+LEFT JOIN Designation AS des
+    ON e.DesignationID = des.DesignationID
+LEFT JOIN Projects AS p
+    ON e.EmployeeID = p.EmployeeID;
 GO
 
+-- Calling the View
+SELECT *
+FROM dbo.vw_EmployeeCompleteDetails;
+
+-- 36. Create a View to show all employee,
+-- department and project details
+IF OBJECT_ID('dbo.vw_EmployeeDepartmentProject', 'V') IS NOT NULL
+    DROP VIEW dbo.vw_EmployeeDepartmentProject;
+GO
+CREATE VIEW dbo.vw_EmployeeDepartmentProject
+AS
+SELECT
+    e.EmployeeID,
+    e.EmployeeName,
+    e.Salary,
+    d.DepartmentNo,
+    d.DepartmentName,
+    p.ProjectID,
+    p.ProjectName,
+    p.Budget
+FROM Employee AS e
+LEFT JOIN Departments AS d
+    ON e.DepartmentNo = d.DepartmentNo
+LEFT JOIN Projects AS p
+    ON e.EmployeeID = p.EmployeeID;
+GO
+-- 36. Calling View 
+SELECT *
+FROM dbo.vw_EmployeeDepartmentProject;
 -- 37. Example of Sequence
 CREATE SEQUENCE projectsSequence AS int START WITH 1001 INCREMENT BY 1 MINVALUE 1001 MAXVALUE 99999 CYCLE CACHE 10
 GO

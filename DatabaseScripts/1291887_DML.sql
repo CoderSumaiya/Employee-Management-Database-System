@@ -30,8 +30,10 @@ INSERT INTO ProjectAssigment(ProjectID,EmployeeID,WorkHour)
 VALUES
 (301,202,40), (302,206,60), (303,203,80), (304,204,50), (305,205,70), (306,201,90)
 
--- 3. Write a delete query for any one table
-DELETE FROM Employee WHERE EmployeeID='208'
+-- 3. Delete query
+
+DELETE FROM Employee
+WHERE EmployeeID = 208;
 -- 4. Write an update query for any one table of your project
 
 UPDATE Employee
@@ -60,7 +62,7 @@ JOIN Projects AS p ON pa.ProjectID = p.ProjectID
 GROUP BY d.DepartmentName, p.ProjectName
 HAVING SUM(p.Budget) > 70000;
 
--- 10. Sub-query to show all information of Project Salaries System
+-- 10. Sub-query to show all information of Project Pensions System
 
 SELECT *
 FROM Projects
@@ -239,13 +241,34 @@ SELECT ROW_NUMBER() OVER (Partition BY ProjectName ORDER BY ProjectID) AS RowNum
 SELECT RANK() OVER (ORDER BY ProjectName) AS Rank FROM Projects
 SELECT DENSE_RANK() OVER (ORDER BY ProjectName) AS DenseRank FROM Projects
 
--- 27. Analytic functions (FIRST_VALUE, LEAD, LAG, PERCENT_RANK, CUME_DIST)
-SELECT ProjectID, ProjectName, Budget, EmployeeID, FIRST_VALUE(Budget) OVER(PARTITION BY ProjectID ORDER BY ProjectName) AS FirstValue FROM Projects
-SELECT ProjectID, ProjectName, Budget, EmployeeID, LEAD(Budget,1,0) OVER(PARTITION BY ProjectID ORDER BY ProjectName) AS LeadAmount FROM Projects
-SELECT ProjectID, ProjectName, Budget, EmployeeID, LAG(Budget) OVER(PARTITION BY ProjectID ORDER BY ProjectName) AS LagAmount FROM Projects
-SELECT Budget, ROUND(PERCENT_RANK() OVER(ORDER BY Budget),2) AS prcntRank FROM Projects
-SELECT ProjectID, ProjectName, Budget, EmployeeID, CUME_DIST() OVER(PARTITION BY ProjectID ORDER BY ProjectName) AS CumeDist FROM Projects
+-- 27. Analytic Functions
+-- FIRST_VALUE, LAST_VALUE, LEAD, LAG, PERCENT_RANK
 
+SELECT
+    ProjectID,
+    ProjectName,
+    Budget,
+
+    FIRST_VALUE(Budget)
+        OVER (ORDER BY ProjectID) AS FirstBudget,
+
+    LAST_VALUE(Budget)
+        OVER (
+            ORDER BY ProjectID
+            ROWS BETWEEN UNBOUNDED PRECEDING
+            AND UNBOUNDED FOLLOWING
+        ) AS LastBudget,
+
+    LEAD(Budget)
+        OVER (ORDER BY ProjectID) AS NextBudget,
+
+    LAG(Budget)
+        OVER (ORDER BY ProjectID) AS PreviousBudget,
+
+    PERCENT_RANK()
+        OVER (ORDER BY Budget) AS PercentRank
+
+FROM Projects;
 -- 28. Example Grouping Sets
 SELECT EmployeeID, DesignationID, SUM(Salary) AS SumAmount FROM Employee
 GROUP BY GROUPING SETS ((EmployeeID, DesignationID), (DesignationID), ())
@@ -311,8 +334,8 @@ SELECT ProjectID, EmployeeID
 FROM ProjectAssigment AS PA
 WHERE EXISTS (SELECT * FROM Projects AS P WHERE P.ProjectID = PA.ProjectID)
 
--- 36. Calling View (vu_EmpDepDesProject)
-SELECT * FROM vu_EmpDepDesProject
+
+
 
 -- 37 (Justify). Calling Sequence Value
 SELECT NEXT VALUE FOR ProjectsSequence AS ProjectID;
